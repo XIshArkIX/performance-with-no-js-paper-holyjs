@@ -1,0 +1,34 @@
+# Non-standard strategy:
+# 1) Ignore everything at repository root by default.
+# 2) Explicitly allow only project roots we want in VCS.
+# This keeps one-off experiment artifacts out automatically.
+/*
+!/.gitignore
+!/.gitattributes
+!/*.md
+!/.vscode/
+!/demos/
+!/public/
+!*.lz4
+!*.xlsx
+!*.png
+!*.gif
+!*.svg
+!*.pptx
+/*.png
+/*.lz4
+/*.xlsx
+/*.gif
+/*.svg
+
+# OS/editor noise
+**/.DS_Store
+
+# Demo build outputs (file_read)
+/demos/file_read/trace_demo
+/demos/file_read/read_file
+/demos/file_read/*.o
+/demos/03-quic-0-rtt/src/quic-0rtt-client
+
+# Demo build outputs (tcp_fast_open)
+/demos/tcp_fast_open/bin/
