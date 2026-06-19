@@ -124,3 +124,11 @@ Import-Csv demos/07-compressing-base/assets/decompression-stats.csv | Format-Tab
 ```
 
 The benchmark scripts also print a formatted table when they finish.
+
+## Machines
+
+| OS | Specs |
+| --- | --- |
+| MacOS | Macbook M3 Pro 18GB |
+| Windows | i7 13700KF @ 5.5GHz @ P-cores / DDR4 @ 4000MHz @ Single-rank @ 14/15/15/35 @ CR: 1T / MSI M480 2TB @ PHISON E18 |
+| Linux |  |

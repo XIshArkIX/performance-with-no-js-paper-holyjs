@@ -40,7 +40,27 @@ function Require-Command {
 
 function Quote-Path {
     param([string]$Path)
-    return '"' + $Path.Replace('"', '\"') + '"'
+    # hyperfine --shell=none treats backslashes as escapes on Windows
+    $normalized = $Path.Replace('\', '/').Replace('"', '\"')
+    return '"' + $normalized + '"'
+}
+
+function Get-HyperfineScanLevel {
+    param([pscustomobject]$Row)
+
+    if ($Row.PSObject.Properties.Name -contains 'parameter_level') {
+        return [int]$Row.parameter_level
+    }
+    if ($Row.PSObject.Properties.Name -contains 'level') {
+        return [int]$Row.level
+    }
+
+    $parameterColumn = $Row.PSObject.Properties.Name | Where-Object { $_ -like 'parameter_*' } | Select-Object -First 1
+    if ($parameterColumn) {
+        return [int]$Row.$parameterColumn
+    }
+
+    throw 'Hyperfine CSV row is missing a parameter level column'
 }
 
 function Get-CompressedOutputLength {
@@ -78,9 +98,9 @@ function Measure-CompressedBytes {
 
     switch ($Algo) {
         'gzip' { return Get-CompressedOutputLength 'gzip' "-$Level -c $inputQuoted" }
-        'brotli' { return Get-CompressedOutputLength 'brotli' "-q $Level -c $inputQuoted" }
+        'brotli' { return Get-CompressedOutputLength 'brotli' "-f -q $Level -c $inputQuoted" }
         'zstd' { return Get-CompressedOutputLength 'zstd' "-$Level -c $inputQuoted" }
-        'dcb' { return Get-CompressedOutputLength 'brotli' "-q $Level -D $(Quote-Path $DcbDict) -c $inputQuoted" }
+        'dcb' { return Get-CompressedOutputLength 'brotli' "-f -q $Level -D $(Quote-Path $DcbDict) -c $inputQuoted" }
         'dcz' { return Get-CompressedOutputLength 'zstd' "-$Level -D $(Quote-Path $DczDict) -c $inputQuoted" }
         default { throw "Unknown algorithm: $Algo" }
     }
@@ -112,7 +132,7 @@ function Prepare-Dcb {
     Write-Host '  Using Node zlib API (training-file template, zstd-dict reuse fallback)'
 
     $env:DCZ_DICT = $DczDict
-    & node $PrepareDcbScript @($DcbDict, $DictMaxBytes, $InputFile) + $TrainFileList
+    & node $PrepareDcbScript (@($DcbDict, $DictMaxBytes, $InputFile) + $TrainFileList)
 
     Write-Host "  DCB dictionary size: $((Get-Item $DcbDict).Length) bytes"
     Write-Host
@@ -151,7 +171,9 @@ function Format-BenchmarkRow {
     $ratio = if ($CompressedBytes -gt 0) { $InputBytes / $CompressedBytes } else { 0 }
     $savings = if ($InputBytes -gt 0) { (1 - $CompressedBytes / $InputBytes) * 100 } else { 0 }
 
-    return ('{0},{1},{2},{3},{4:F4},{5:F2},{6:F3},{7:F3},{8:F3},{9:F3},{10:F3},{11:F3},{12:F3},{13}' -f `
+    return [string]::Format(
+        [System.Globalization.CultureInfo]::InvariantCulture,
+        '{0},{1},{2},{3},{4:F4},{5:F2},{6:F3},{7:F3},{8:F3},{9:F3},{10:F3},{11:F3},{12:F3},{13}',
         $Algo,
         $Level,
         $InputBytes,
@@ -173,10 +195,9 @@ function Get-AppendCsvRows {
 
     $csv = Join-Path $TmpDir "$Algo.csv"
     $rows = Import-Csv $csv
-    $levelColumn = ($rows | Get-Member -MemberType NoteProperty | Select-Object -Last 1).Name
 
     foreach ($row in $rows) {
-        $level = [int]$row.$levelColumn
+        $level = Get-HyperfineScanLevel -Row $row
         $compressedBytes = Measure-CompressedBytes -Algo $Algo -Level $level
         Format-BenchmarkRow -Algo $Algo -Level $level -CompressedBytes $compressedBytes -Timing $row
     }
@@ -224,7 +245,7 @@ try {
         -NameTemplate 'gzip -{level}'
 
     Invoke-HyperfineScan -Algo 'brotli' -Min $BrotliLevelMin -Max $BrotliLevelMax `
-        -CmdTemplate "brotli -q {level} -c $inputQuoted" `
+        -CmdTemplate "brotli -f -q {level} -c $inputQuoted" `
         -NameTemplate 'brotli -q {level}'
 
     Invoke-HyperfineScan -Algo 'zstd' -Min $ZstdLevelMin -Max $ZstdLevelMax `
@@ -232,7 +253,7 @@ try {
         -NameTemplate 'zstd -{level}'
 
     Invoke-HyperfineScan -Algo 'dcb' -Min $BrotliLevelMin -Max $BrotliLevelMax `
-        -CmdTemplate "brotli -q {level} -D $dcbQuoted -c $inputQuoted" `
+        -CmdTemplate "brotli -f -q {level} -D $dcbQuoted -c $inputQuoted" `
         -NameTemplate 'dcb -q {level}'
 
     Invoke-HyperfineScan -Algo 'dcz' -Min $ZstdLevelMin -Max $ZstdLevelMax `
