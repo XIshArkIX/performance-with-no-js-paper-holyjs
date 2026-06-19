@@ -131,4 +131,4 @@ The benchmark scripts also print a formatted table when they finish.
 | --- | --- |
 | MacOS | Macbook M3 Pro 18GB |
 | Windows | i7 13700KF @ 5.5GHz @ P-cores / DDR4 @ 4000MHz @ Single-rank @ 14/15/15/35 @ CR: 1T / MSI M480 2TB @ PHISON E18 |
-| Linux |  |
+| Linux | i7-9750H @ 4.5GHz turbo / DDR4 @ 2667MHz @ Dual-rank @ 19/19/19/43 / WDC PC SN520 512GB NVMe + Kingston SA400S3 1TB @ Dell G3 3590 |
