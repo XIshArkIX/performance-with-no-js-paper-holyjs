@@ -23,22 +23,56 @@ sudo apt install hyperfine brotli zstd nodejs
 sudo pacman -S hyperfine brotli zstd nodejs
 ```
 
-`gzip` and `awk` are required by the benchmark script and are included in a default install on all three platforms.
+`gzip` and `awk` are required by the bash benchmark scripts and are included in a default install on all three platforms.
+
+**Windows (Scoop)**
+
+```powershell
+scoop install hyperfine brotli zstd nodejs gzip
+```
+
+**Windows (winget)**
+
+```powershell
+winget install sharkdp.hyperfine
+winget install Meta.Zstandard
+winget install OpenJS.NodeJS.LTS
+```
+
+Install `brotli` and `gzip` separately (for example via [Scoop](https://scoop.sh) or [Git for Windows](https://git-scm.com/download/win), which adds `gzip` under `Git\usr\bin`).
 
 ## Run
 
-From the repository root:
+From the repository root.
+
+**macOS / Linux**
 
 ```bash
 ./demos/07-compressing-base/src/compress-benchmark.sh
+```
+
+**Windows (PowerShell)**
+
+Run from the repository root in PowerShell 5.1 or later. If script execution is blocked, run `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once.
+
+```powershell
+.\demos\07-compressing-base\src\compress-benchmark.ps1
 ```
 
 Results are written to `demos/07-compressing-base/assets/compression-stats.csv`.
 
 ### Decompression
 
+**macOS / Linux**
+
 ```bash
 ./demos/07-compressing-base/src/decompress-benchmark.sh
+```
+
+**Windows (PowerShell)**
+
+```powershell
+.\demos\07-compressing-base\src\decompress-benchmark.ps1
 ```
 
 Results are written to `demos/07-compressing-base/assets/decompression-stats.csv`.
@@ -46,6 +80,8 @@ Results are written to `demos/07-compressing-base/assets/decompression-stats.csv
 The decompression benchmark pre-compresses artifacts at each level, then measures decode time. Size columns (`input_bytes`, `compressed_bytes`, `compression_ratio`, `savings_percent`) describe the compressed payload being decoded and match the compression benchmark schema.
 
 ## Quick run (fewer hyperfine iterations)
+
+**macOS / Linux**
 
 ```bash
 HYPERFINE_WARMUP=1 HYPERFINE_MIN_RUNS=5 \
@@ -57,9 +93,34 @@ HYPERFINE_WARMUP=1 HYPERFINE_MIN_RUNS=5 \
   ./demos/07-compressing-base/src/decompress-benchmark.sh
 ```
 
+**Windows (PowerShell)**
+
+```powershell
+$env:HYPERFINE_WARMUP = 1
+$env:HYPERFINE_MIN_RUNS = 5
+.\demos\07-compressing-base\src\compress-benchmark.ps1
+```
+
+```powershell
+$env:HYPERFINE_WARMUP = 1
+$env:HYPERFINE_MIN_RUNS = 5
+.\demos\07-compressing-base\src\decompress-benchmark.ps1
+```
+
 ## View results
+
+**macOS / Linux**
 
 ```bash
 column -s, -t demos/07-compressing-base/assets/compression-stats.csv
 column -s, -t demos/07-compressing-base/assets/decompression-stats.csv
 ```
+
+**Windows (PowerShell)**
+
+```powershell
+Import-Csv demos/07-compressing-base/assets/compression-stats.csv | Format-Table -AutoSize
+Import-Csv demos/07-compressing-base/assets/decompression-stats.csv | Format-Table -AutoSize
+```
+
+The benchmark scripts also print a formatted table when they finish.
