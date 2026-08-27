@@ -30,6 +30,7 @@
 /demos/file_read/read_file
 /demos/file_read/*.o
 /demos/03-quic-0-rtt/src/quic-0rtt-client
+/demos/07-compressing-base/dictionaries/
 
 # Demo build outputs (tcp_fast_open)
 /demos/tcp_fast_open/bin/
