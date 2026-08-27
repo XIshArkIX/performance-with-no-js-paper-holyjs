@@ -15,6 +15,7 @@
 !*.gif
 !*.svg
 !*.pptx
+!*.pdf
 /*.png
 /*.lz4
 /*.xlsx
